@@ -310,9 +310,6 @@ except Exception as e:
     import traceback
     st.error(f"Error checking predictions: {e}")
     st.code(traceback.format_exc())
-finally:
-    if conn:
-        conn.close()
 
 if not tickers:
     st.info("No tickers found. Creating sample data...")
@@ -476,12 +473,16 @@ if run_button and len(date_range) == 2:
             st.markdown("<br>", unsafe_allow_html=True)
             
             dates = pd.to_datetime(results["dates"])
-            prices_df = pd.read_sql_query("""
-                SELECT date, adjusted_close FROM prices p
-                JOIN symbols s ON p.symbol_id = s.id
-                WHERE s.ticker = ? AND date >= ? AND date <= ?
-                ORDER BY date
-            """, conn, params=[selected_ticker, start_date, end_date])
+            conn_prices = get_connection()
+            try:
+                prices_df = pd.read_sql_query("""
+                    SELECT date, adjusted_close FROM prices p
+                    JOIN symbols s ON p.symbol_id = s.id
+                    WHERE s.ticker = ? AND date >= ? AND date <= ?
+                    ORDER BY date
+                """, conn_prices, params=[selected_ticker, start_date, end_date])
+            finally:
+                conn_prices.close()
             
             chart_col1, chart_col2 = st.columns(2)
             
