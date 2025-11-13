@@ -106,6 +106,25 @@ st.markdown("""
         font-weight: 200;
         letter-spacing: 1px;
     }
+    
+    .sidebar .sidebar-content {
+        background-color: #000000;
+    }
+    
+    .sidebar h1, .sidebar h2, .sidebar h3 {
+        color: #00FF00;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 200;
+        letter-spacing: 2px;
+        text-transform: lowercase;
+    }
+    
+    .sidebar label {
+        color: #00FF00;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 200;
+        letter-spacing: 1px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
