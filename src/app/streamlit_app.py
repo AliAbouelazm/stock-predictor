@@ -256,33 +256,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-conn = get_connection()
-try:
-    initialize_schema(conn)
-    symbols_df = pd.read_sql_query("SELECT ticker FROM symbols ORDER BY ticker", conn)
-    tickers = symbols_df["ticker"].tolist() if not symbols_df.empty else []
-except Exception as e:
-    tickers = []
-    st.warning(f"Database issue: {e}")
-
-if not tickers:
-    st.info("No tickers found. Creating sample data...")
-    with st.spinner("Initializing database and creating sample data..."):
-        try:
-            from src.database.db_utils import initialize_schema
-            initialize_schema(conn)
-            import subprocess
-            import sys
-            result = subprocess.run([sys.executable, "create_sample_data.py"], 
-                                  capture_output=True, text=True, cwd=Path(__file__).parent.parent.parent)
-            if result.returncode == 0:
-                st.success("Sample data created! Please refresh the page.")
-                st.rerun()
-            else:
-                st.error(f"Error creating sample data: {result.stderr}")
-        except Exception as e:
-            st.error(f"Error: {e}")
-    st.stop()
+st.write("**App Version:** v3.0 - Enhanced Debug Mode")
 
 from src.config import DB_PATH
 import os
@@ -295,10 +269,21 @@ if os.path.exists(db_path_str):
     db_size = os.path.getsize(db_path_str)
     st.write(f"**Database size:** {db_size:,} bytes")
 
-conn_check = get_connection()
+conn = get_connection()
+try:
+    initialize_schema(conn)
+    symbols_df = pd.read_sql_query("SELECT ticker FROM symbols ORDER BY ticker", conn)
+    tickers = symbols_df["ticker"].tolist() if not symbols_df.empty else []
+    st.write(f"**Tickers in database:** {', '.join(tickers) if tickers else 'None'}")
+except Exception as e:
+    tickers = []
+    st.error(f"Database issue: {e}")
+    import traceback
+    st.code(traceback.format_exc())
+
 has_predictions = False
 try:
-    total_preds = pd.read_sql_query("SELECT COUNT(*) as cnt FROM predictions", conn_check)
+    total_preds = pd.read_sql_query("SELECT COUNT(*) as cnt FROM predictions", conn)
     pred_count = total_preds.iloc[0]['cnt']
     st.write(f"**Total predictions in DB:** {pred_count}")
     
@@ -307,7 +292,7 @@ try:
             SELECT DISTINCT s.ticker, p.model_name 
             FROM predictions p
             JOIN symbols s ON p.symbol_id = s.id
-        """, conn_check)
+        """, conn)
         has_predictions = not predictions_check.empty
         if has_predictions:
             tickers_found = sorted(predictions_check['ticker'].unique())
@@ -316,7 +301,7 @@ try:
             st.info(f"Available models: {', '.join(models_found)}")
         else:
             st.warning("Query returned empty - checking symbols table...")
-            symbols_check = pd.read_sql_query("SELECT COUNT(*) as cnt FROM symbols", conn_check)
+            symbols_check = pd.read_sql_query("SELECT COUNT(*) as cnt FROM symbols", conn)
             st.write(f"Symbols in DB: {symbols_check.iloc[0]['cnt']}")
     else:
         st.warning("Predictions table is empty!")
@@ -326,8 +311,31 @@ except Exception as e:
     st.error(f"Error checking predictions: {e}")
     st.code(traceback.format_exc())
 finally:
-    if conn_check:
-        conn_check.close()
+    if conn:
+        conn.close()
+
+if not tickers:
+    st.info("No tickers found. Creating sample data...")
+    with st.spinner("Initializing database and creating sample data..."):
+        try:
+            from src.database.db_utils import initialize_schema, get_connection
+            conn2 = get_connection()
+            initialize_schema(conn2)
+            import subprocess
+            import sys
+            result = subprocess.run([sys.executable, "create_sample_data.py"], 
+                                  capture_output=True, text=True, cwd=Path(__file__).parent.parent.parent)
+            if result.returncode == 0:
+                st.success("Sample data created! Please refresh the page.")
+                st.rerun()
+            else:
+                st.error(f"Error creating sample data: {result.stderr}")
+            conn2.close()
+        except Exception as e:
+            st.error(f"Error: {e}")
+            import traceback
+            st.code(traceback.format_exc())
+    st.stop()
 
 if not has_predictions and tickers:
     st.warning("⚠️ **No predictions found in database.** To see results, you need to:")
