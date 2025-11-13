@@ -1,4 +1,4 @@
-# StockOracle
+# stockly
 
 A complete stock market prediction and backtesting system with SQL-based data storage, multiple ML models (baseline + LSTM), and a retro pixel-style visualizer.
 

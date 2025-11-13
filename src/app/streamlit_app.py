@@ -1,4 +1,4 @@
-"""Streamlit app for StockOracle with retro pixel style."""
+"""Streamlit app for stockly with retro pixel style."""
 
 import streamlit as st
 import pandas as pd
@@ -16,7 +16,7 @@ from src.visualization.plot_price_and_signals import plot_price_with_signals
 from src.visualization.plot_performance import plot_backtest_performance
 from src.visualization.style_pixel_theme import PIXEL_COLORS
 
-st.set_page_config(page_title="StockOracle", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="stockly", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
@@ -82,7 +82,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("STOCKORACLE")
+st.title("stockly")
 
 conn = get_connection()
 try:

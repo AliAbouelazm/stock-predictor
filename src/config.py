@@ -1,4 +1,4 @@
-"""Configuration constants for StockOracle."""
+"""Configuration constants for stockly."""
 
 from pathlib import Path
 
