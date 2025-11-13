@@ -348,43 +348,57 @@ if not tickers:
 if not has_predictions and tickers:
     st.warning("⚠️ **No predictions found in database.**")
     
-    if st.button("🚀 Generate Predictions Now", type="primary"):
-        with st.spinner("Training models and generating predictions... This may take a few minutes."):
-            try:
-                import subprocess
-                import sys
-                from pathlib import Path
-                
-                steps = [
-                    ("Training baseline models...", ["src/models/train_baseline_models.py"]),
-                    ("Training LSTM model...", ["src/models/train_lstm.py"]),
-                    ("Generating predictions...", ["src/models/generate_predictions.py"])
-                ]
-                
-                for step_name, script in steps:
-                    st.write(f"**{step_name}**")
-                    result = subprocess.run(
-                        [sys.executable] + script,
-                        capture_output=True,
-                        text=True,
-                        cwd=Path(__file__).parent.parent.parent,
-                        timeout=300
-                    )
-                    if result.returncode != 0:
-                        st.error(f"Error in {step_name}: {result.stderr}")
-                        st.stop()
-                    else:
-                        st.success(f"✅ {step_name} completed")
-                
-                st.success("🎉 All predictions generated! Refreshing...")
-                st.rerun()
-                
-            except subprocess.TimeoutExpired:
-                st.error("Process timed out. Please try again.")
-            except Exception as e:
-                st.error(f"Error: {e}")
-                import traceback
-                st.code(traceback.format_exc())
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🚀 Generate Predictions Now", type="primary", use_container_width=True):
+            with st.spinner("Training models and generating predictions... This may take a few minutes."):
+                try:
+                    import subprocess
+                    import sys
+                    from pathlib import Path
+                    import os
+                    
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    
+                    steps = [
+                        ("Creating sample data...", ["create_sample_data.py"]),
+                        ("Training baseline models...", ["src/models/train_baseline_models.py"]),
+                        ("Training LSTM model...", ["src/models/train_lstm.py"]),
+                        ("Generating predictions...", ["src/models/generate_predictions.py"])
+                    ]
+                    
+                    for i, (step_name, script) in enumerate(steps):
+                        status_text.text(f"Step {i+1}/{len(steps)}: {step_name}")
+                        progress_bar.progress((i + 1) / len(steps))
+                        
+                        result = subprocess.run(
+                            [sys.executable] + script,
+                            capture_output=True,
+                            text=True,
+                            cwd=Path(__file__).parent.parent.parent,
+                            timeout=600,
+                            env=os.environ.copy()
+                        )
+                        if result.returncode != 0:
+                            st.error(f"Error in {step_name}")
+                            st.code(result.stderr)
+                            st.code(result.stdout)
+                            st.stop()
+                        else:
+                            st.success(f"✅ {step_name} completed")
+                    
+                    progress_bar.progress(1.0)
+                    status_text.text("Complete!")
+                    st.success("🎉 All predictions generated! Refreshing...")
+                    st.rerun()
+                    
+                except subprocess.TimeoutExpired:
+                    st.error("Process timed out. Please try again.")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
     
     st.markdown("""
     **Or run manually in terminal:**
