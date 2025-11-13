@@ -127,6 +127,12 @@ def insert_targets(conn: sqlite3.Connection, symbol_id: int, targets_df: pd.Data
 def insert_predictions(conn: sqlite3.Connection, symbol_id: int, predictions_df: pd.DataFrame, model_name: str) -> None:
     """Insert or replace prediction data."""
     for _, row in predictions_df.iterrows():
+        date_val = row["date"]
+        if hasattr(date_val, 'strftime'):
+            date_val = date_val.strftime("%Y-%m-%d")
+        elif isinstance(date_val, pd.Timestamp):
+            date_val = date_val.strftime("%Y-%m-%d")
+        
         conn.execute("""
             INSERT OR REPLACE INTO predictions 
             (symbol_id, date, model_name, predicted_direction, predicted_return,
@@ -134,13 +140,13 @@ def insert_predictions(conn: sqlite3.Connection, symbol_id: int, predictions_df:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             symbol_id,
-            row["date"],
+            date_val,
             model_name,
-            row.get("predicted_direction"),
-            row.get("predicted_return"),
-            row.get("prob_up"),
-            row.get("prob_flat"),
-            row.get("prob_down")
+            int(row.get("predicted_direction")) if pd.notna(row.get("predicted_direction")) else None,
+            float(row.get("predicted_return")) if pd.notna(row.get("predicted_return")) else None,
+            float(row.get("prob_up")) if pd.notna(row.get("prob_up")) else None,
+            float(row.get("prob_flat")) if pd.notna(row.get("prob_flat")) else None,
+            float(row.get("prob_down")) if pd.notna(row.get("prob_down")) else None
         ))
     conn.commit()
 

@@ -318,7 +318,7 @@ with col1:
     selected_ticker = st.selectbox("ticker", tickers, key="ticker_select")
 
 with col2:
-    date_range = st.date_input("date range", value=(date(2024, 1, 1), date.today()), key="date_range")
+    date_range = st.date_input("date range", value=(date(2022, 7, 1), date(2022, 12, 31)), key="date_range")
 
 with col3:
     st.write("")
