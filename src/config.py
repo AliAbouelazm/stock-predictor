@@ -1,4 +1,4 @@
-"""Configuration constants for stock market prediction system."""
+"""Configuration constants for PixelStock Predictor."""
 
 from pathlib import Path
 
