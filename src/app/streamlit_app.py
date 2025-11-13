@@ -20,10 +20,12 @@ st.set_page_config(page_title="stockly", layout="wide", initial_sidebar_state="e
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@100;200;300;400&display=swap');
     
     * {
-        font-family: 'Courier New', monospace;
+        font-family: 'JetBrains Mono', 'Space Mono', monospace;
+        font-weight: 200;
+        letter-spacing: 1.5px;
     }
     
     .main {
@@ -36,20 +38,33 @@ st.markdown("""
     
     h1, h2, h3 {
         color: #00FF00;
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-        text-transform: uppercase;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 200;
+        letter-spacing: 4px;
+        text-transform: lowercase;
+        font-size: 2.5rem;
+    }
+    
+    h2 {
+        font-size: 1.8rem;
+        letter-spacing: 3px;
+    }
+    
+    h3 {
+        font-size: 1.3rem;
         letter-spacing: 2px;
     }
     
     .stButton>button {
         background-color: #00FF00;
         color: #000000;
-        border: 3px solid #00FF00;
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-        padding: 0.5rem 1rem;
+        border: 2px solid #00FF00;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 200;
+        padding: 0.4rem 1.2rem;
         border-radius: 0;
+        letter-spacing: 2px;
+        font-size: 0.9rem;
     }
     
     .stButton>button:hover {
@@ -59,25 +74,37 @@ st.markdown("""
     
     .stSelectbox label, .stDateInput label {
         color: #00FF00;
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 200;
+        letter-spacing: 1px;
+        font-size: 0.85rem;
     }
     
     .stMetric {
-        background-color: #111111;
-        border: 2px solid #00FF00;
+        background-color: #0a0a0a;
+        border: 1px solid #00FF00;
         padding: 1rem;
     }
     
     .stMetric label {
         color: #00FF00;
-        font-family: 'Courier New', monospace;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 200;
+        letter-spacing: 1px;
+        font-size: 0.75rem;
     }
     
     .stMetric [data-testid="stMetricValue"] {
         color: #00FF00;
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 200;
+        letter-spacing: 1px;
+        font-size: 1.5rem;
+    }
+    
+    body, p, div, span {
+        font-weight: 200;
+        letter-spacing: 1px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -86,24 +113,41 @@ st.title("stockly")
 
 conn = get_connection()
 try:
+    initialize_schema(conn)
     symbols_df = pd.read_sql_query("SELECT ticker FROM symbols ORDER BY ticker", conn)
     tickers = symbols_df["ticker"].tolist() if not symbols_df.empty else []
-except:
+except Exception as e:
     tickers = []
+    st.warning(f"Database issue: {e}")
 
 if not tickers:
-    st.error("No tickers found in database. Please load data first.")
+    st.info("No tickers found. Creating sample data...")
+    with st.spinner("Initializing database and creating sample data..."):
+        try:
+            from src.database.db_utils import initialize_schema
+            initialize_schema(conn)
+            import subprocess
+            import sys
+            result = subprocess.run([sys.executable, "create_sample_data.py"], 
+                                  capture_output=True, text=True, cwd=Path(__file__).parent.parent.parent)
+            if result.returncode == 0:
+                st.success("Sample data created! Please refresh the page.")
+                st.rerun()
+            else:
+                st.error(f"Error creating sample data: {result.stderr}")
+        except Exception as e:
+            st.error(f"Error: {e}")
     st.stop()
 
 with st.sidebar:
-    st.header("CONTROLS")
-    selected_ticker = st.selectbox("TICKER", tickers)
-    model_choice = st.selectbox("MODEL", ["Logistic Regression", "Random Forest", "LSTM"])
+    st.header("controls")
+    selected_ticker = st.selectbox("ticker", tickers)
+    model_choice = st.selectbox("model", ["Logistic Regression", "Random Forest", "LSTM"])
     
-    start_date = st.date_input("START DATE", value=date(2024, 1, 1))
-    end_date = st.date_input("END DATE", value=date.today())
+    start_date = st.date_input("start date", value=date(2024, 1, 1))
+    end_date = st.date_input("end date", value=date.today())
     
-    run_button = st.button("RUN ANALYSIS", type="primary")
+    run_button = st.button("run analysis", type="primary")
 
 if run_button:
     model_map = {
@@ -126,20 +170,20 @@ if run_button:
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
-                st.metric("TOTAL RETURN", f"{results['total_return']:.2f}%")
+                st.metric("total return", f"{results['total_return']:.2f}%")
             with col2:
-                st.metric("BUY & HOLD", f"{results['buy_hold_return']:.2f}%")
+                st.metric("buy & hold", f"{results['buy_hold_return']:.2f}%")
             with col3:
-                st.metric("SHARPE RATIO", f"{results['sharpe_ratio']:.4f}")
+                st.metric("sharpe ratio", f"{results['sharpe_ratio']:.4f}")
             with col4:
-                st.metric("MAX DRAWDOWN", f"{results['max_drawdown']:.2f}%")
+                st.metric("max drawdown", f"{results['max_drawdown']:.2f}%")
             
             st.markdown("---")
             
             col1, col2 = st.columns(2)
             
             with col1:
-                st.subheader("PRICE & SIGNALS")
+                st.subheader("price & signals")
                 fig1, ax1 = plt.subplots(figsize=(10, 6))
                 ax1.set_facecolor(PIXEL_COLORS["background"])
                 fig1.patch.set_facecolor(PIXEL_COLORS["background"])
@@ -165,7 +209,7 @@ if run_button:
                     st.pyplot(fig1)
             
             with col2:
-                st.subheader("PERFORMANCE")
+                st.subheader("performance")
                 fig2, ax2 = plt.subplots(figsize=(10, 6))
                 ax2.set_facecolor(PIXEL_COLORS["background"])
                 fig2.patch.set_facecolor(PIXEL_COLORS["background"])
