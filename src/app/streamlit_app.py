@@ -212,85 +212,83 @@ if run_button and len(date_range) == 2:
     model_name = "lstm_model"
     
     try:
-        with st.spinner("running analysis..."):
-            results = backtest_model(
-                selected_ticker,
-                model_name,
-                start_date.strftime("%Y-%m-%d"),
-                end_date.strftime("%Y-%m-%d")
-            )
-        
-        if results:
-            st.markdown("<br>", unsafe_allow_html=True)
+            with st.spinner("running analysis..."):
+                results = backtest_model(
+                    selected_ticker,
+                    model_name,
+                    start_date.strftime("%Y-%m-%d"),
+                    end_date.strftime("%Y-%m-%d")
+                )
             
-            metrics_col1, metrics_col2, metrics_col3, metrics_col4 = st.columns(4)
-            
-            with metrics_col1:
-                st.metric("total return", f"{results['total_return']:.2f}%")
-            with metrics_col2:
-                st.metric("buy & hold", f"{results['buy_hold_return']:.2f}%")
-            with metrics_col3:
-                st.metric("sharpe ratio", f"{results['sharpe_ratio']:.4f}")
-            with metrics_col4:
-                st.metric("max drawdown", f"{results['max_drawdown']:.2f}%")
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            dates = pd.to_datetime(results["dates"])
-            prices_df = pd.read_sql_query("""
-                SELECT date, adjusted_close FROM prices p
-                JOIN symbols s ON p.symbol_id = s.id
-                WHERE s.ticker = ? AND date >= ? AND date <= ?
-                ORDER BY date
-            """, conn, params=[selected_ticker, start_date, end_date])
-            
-            chart_col1, chart_col2 = st.columns(2)
-            
-            with chart_col1:
-                st.markdown("#### price & signals")
-                fig1, ax1 = plt.subplots(figsize=(10, 6))
-                ax1.set_facecolor("#ffffff")
-                fig1.patch.set_facecolor("#ffffff")
+                st.markdown("<br>", unsafe_allow_html=True)
                 
-                if not prices_df.empty:
-                    prices_df["date"] = pd.to_datetime(prices_df["date"])
-                    ax1.plot(prices_df["date"], prices_df["adjusted_close"], 
-                            color="#000000", linewidth=2, marker="s", markersize=3)
+                metrics_col1, metrics_col2, metrics_col3, metrics_col4 = st.columns(4)
+                
+                with metrics_col1:
+                    st.metric("total return", f"{results['total_return']:.2f}%")
+                with metrics_col2:
+                    st.metric("buy & hold", f"{results['buy_hold_return']:.2f}%")
+                with metrics_col3:
+                    st.metric("sharpe ratio", f"{results['sharpe_ratio']:.4f}")
+                with metrics_col4:
+                    st.metric("max drawdown", f"{results['max_drawdown']:.2f}%")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                dates = pd.to_datetime(results["dates"])
+                prices_df = pd.read_sql_query("""
+                    SELECT date, adjusted_close FROM prices p
+                    JOIN symbols s ON p.symbol_id = s.id
+                    WHERE s.ticker = ? AND date >= ? AND date <= ?
+                    ORDER BY date
+                """, conn, params=[selected_ticker, start_date, end_date])
+                
+                chart_col1, chart_col2 = st.columns(2)
+                
+                with chart_col1:
+                    st.markdown("#### price & signals")
+                    fig1, ax1 = plt.subplots(figsize=(10, 6))
                     ax1.set_facecolor("#ffffff")
-                    ax1.tick_params(colors="#000000")
-                    ax1.set_xlabel("date", color="#000000", fontfamily="JetBrains Mono")
-                    ax1.set_ylabel("price", color="#000000", fontfamily="JetBrains Mono")
-                    ax1.set_title(f"{selected_ticker}", color="#000000", fontfamily="JetBrains Mono", fontweight=200)
-                    ax1.grid(True, color="#cccccc", linestyle="-", linewidth=0.5)
-                    plt.tight_layout()
-                    st.pyplot(fig1)
-            
-            with chart_col2:
-                st.markdown("#### performance")
-                fig2, ax2 = plt.subplots(figsize=(10, 6))
-                ax2.set_facecolor("#ffffff")
-                fig2.patch.set_facecolor("#ffffff")
+                    fig1.patch.set_facecolor("#ffffff")
+                    
+                    if not prices_df.empty:
+                        prices_df["date"] = pd.to_datetime(prices_df["date"])
+                        ax1.plot(prices_df["date"], prices_df["adjusted_close"], 
+                                color="#000000", linewidth=2, marker="s", markersize=3)
+                        ax1.set_facecolor("#ffffff")
+                        ax1.tick_params(colors="#000000")
+                        ax1.set_xlabel("date", color="#000000", fontfamily="JetBrains Mono")
+                        ax1.set_ylabel("price", color="#000000", fontfamily="JetBrains Mono")
+                        ax1.set_title(f"{selected_ticker}", color="#000000", fontfamily="JetBrains Mono", fontweight=200)
+                        ax1.grid(True, color="#cccccc", linestyle="-", linewidth=0.5)
+                        plt.tight_layout()
+                        st.pyplot(fig1)
                 
-                ax2.plot(dates, results["portfolio_value"], 
-                        color="#000000", linewidth=2, marker="s", markersize=3, label="strategy")
-                ax2.plot(dates, results["buy_hold_value"], 
-                        color="#666666", linewidth=2, marker="s", markersize=3, label="buy & hold")
-                ax2.set_facecolor("#ffffff")
-                ax2.tick_params(colors="#000000")
-                ax2.set_xlabel("date", color="#000000", fontfamily="JetBrains Mono")
-                ax2.set_ylabel("portfolio value", color="#000000", fontfamily="JetBrains Mono")
-                ax2.set_title("cumulative returns", color="#000000", fontfamily="JetBrains Mono", fontweight=200)
-                ax2.legend(facecolor="#ffffff", edgecolor="#cccccc", prop={"family": "JetBrains Mono"})
-                ax2.grid(True, color="#cccccc", linestyle="-", linewidth=0.5)
-                plt.tight_layout()
-                st.pyplot(fig2)
+                with chart_col2:
+                    st.markdown("#### performance")
+                    fig2, ax2 = plt.subplots(figsize=(10, 6))
+                    ax2.set_facecolor("#ffffff")
+                    fig2.patch.set_facecolor("#ffffff")
+                    
+                    ax2.plot(dates, results["portfolio_value"], 
+                            color="#000000", linewidth=2, marker="s", markersize=3, label="strategy")
+                    ax2.plot(dates, results["buy_hold_value"], 
+                            color="#666666", linewidth=2, marker="s", markersize=3, label="buy & hold")
+                    ax2.set_facecolor("#ffffff")
+                    ax2.tick_params(colors="#000000")
+                    ax2.set_xlabel("date", color="#000000", fontfamily="JetBrains Mono")
+                    ax2.set_ylabel("portfolio value", color="#000000", fontfamily="JetBrains Mono")
+                    ax2.set_title("cumulative returns", color="#000000", fontfamily="JetBrains Mono", fontweight=200)
+                    ax2.legend(facecolor="#ffffff", edgecolor="#cccccc", prop={"family": "JetBrains Mono"})
+                    ax2.grid(True, color="#cccccc", linestyle="-", linewidth=0.5)
+                    plt.tight_layout()
+                    st.pyplot(fig2)
+            else:
+                st.warning("no results found for this ticker and date range")
         
-    except Exception as e:
-        st.error(f"error: {str(e)}")
-        st.info("ensure models are trained and predictions are generated")
-
-elif run_button:
-    st.warning("please select a valid date range")
+        except Exception as e:
+            st.error(f"error: {str(e)}")
+            st.info("ensure models are trained and predictions are generated")
 
 conn.close()
 
