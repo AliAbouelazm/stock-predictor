@@ -1,4 +1,4 @@
-"""Configuration constants for PixelStock Predictor."""
+"""Configuration constants for StockOracle."""
 
 from pathlib import Path
 
