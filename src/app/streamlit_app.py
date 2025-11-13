@@ -29,16 +29,16 @@ st.markdown("""
     }
     
     .main {
-        background-color: #000000;
+        background-color: #1a1a1a;
     }
     
     .stApp {
-        background-color: #000000;
+        background-color: #1a1a1a;
     }
     
     .logo-header {
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-        border-bottom: 2px solid #00FF00;
+        background: #1a1a1a;
+        border-bottom: 1px solid #333333;
         padding: 1.5rem 0;
         margin-bottom: 2rem;
         text-align: center;
@@ -48,11 +48,10 @@ st.markdown("""
         font-family: 'Orbitron', sans-serif;
         font-weight: 700;
         font-size: 3.5rem;
-        color: #00FF00;
+        color: #000000;
         letter-spacing: 8px;
         text-transform: uppercase;
         margin: 0;
-        text-shadow: 0 0 10px #00FF00, 0 0 20px #00FF00;
     }
     
     h1, h2, h3 {
@@ -127,7 +126,7 @@ st.markdown("""
     }
     
     .sidebar .sidebar-content {
-        background-color: #000000;
+        background-color: #1a1a1a;
     }
     
     .sidebar h1, .sidebar h2, .sidebar h3 {
