@@ -368,6 +368,10 @@ if not has_predictions and tickers:
                         ("Generating predictions...", ["src/models/generate_predictions.py"])
                     ]
                     
+                    project_root = Path(__file__).parent.parent.parent
+                    env = os.environ.copy()
+                    env['PYTHONPATH'] = str(project_root)
+                    
                     for i, (step_name, script) in enumerate(steps):
                         status_text.text(f"Step {i+1}/{len(steps)}: {step_name}")
                         progress_bar.progress((i + 1) / len(steps))
@@ -376,9 +380,9 @@ if not has_predictions and tickers:
                             [sys.executable] + script,
                             capture_output=True,
                             text=True,
-                            cwd=Path(__file__).parent.parent.parent,
+                            cwd=project_root,
                             timeout=600,
-                            env=os.environ.copy()
+                            env=env
                         )
                         if result.returncode != 0:
                             st.error(f"Error in {step_name}")
