@@ -285,29 +285,41 @@ if not tickers:
     st.stop()
 
 from src.config import DB_PATH
-st.write(f"**Database location:** `{DB_PATH.resolve()}`")
+import os
+
+db_path_str = str(DB_PATH.resolve())
+st.write(f"**Database location:** `{db_path_str}`")
+st.write(f"**Database exists:** {os.path.exists(db_path_str)}")
+
+if os.path.exists(db_path_str):
+    db_size = os.path.getsize(db_path_str)
+    st.write(f"**Database size:** {db_size:,} bytes")
 
 conn_check = get_connection()
 has_predictions = False
 try:
     total_preds = pd.read_sql_query("SELECT COUNT(*) as cnt FROM predictions", conn_check)
-    st.write(f"**Total predictions in DB:** {total_preds.iloc[0]['cnt']}")
+    pred_count = total_preds.iloc[0]['cnt']
+    st.write(f"**Total predictions in DB:** {pred_count}")
     
-    predictions_check = pd.read_sql_query("""
-        SELECT DISTINCT s.ticker, p.model_name 
-        FROM predictions p
-        JOIN symbols s ON p.symbol_id = s.id
-    """, conn_check)
-    has_predictions = not predictions_check.empty
-    if has_predictions:
-        tickers_found = sorted(predictions_check['ticker'].unique())
-        models_found = sorted(predictions_check['model_name'].unique())
-        st.success(f"✅ Found predictions for tickers: {', '.join(tickers_found)}")
-        st.info(f"Available models: {', '.join(models_found)}")
+    if pred_count > 0:
+        predictions_check = pd.read_sql_query("""
+            SELECT DISTINCT s.ticker, p.model_name 
+            FROM predictions p
+            JOIN symbols s ON p.symbol_id = s.id
+        """, conn_check)
+        has_predictions = not predictions_check.empty
+        if has_predictions:
+            tickers_found = sorted(predictions_check['ticker'].unique())
+            models_found = sorted(predictions_check['model_name'].unique())
+            st.success(f"✅ Found predictions for tickers: {', '.join(tickers_found)}")
+            st.info(f"Available models: {', '.join(models_found)}")
+        else:
+            st.warning("Query returned empty - checking symbols table...")
+            symbols_check = pd.read_sql_query("SELECT COUNT(*) as cnt FROM symbols", conn_check)
+            st.write(f"Symbols in DB: {symbols_check.iloc[0]['cnt']}")
     else:
-        st.warning("Query returned empty - checking symbols table...")
-        symbols_check = pd.read_sql_query("SELECT COUNT(*) as cnt FROM symbols", conn_check)
-        st.write(f"Symbols in DB: {symbols_check.iloc[0]['cnt']}")
+        st.warning("Predictions table is empty!")
 except Exception as e:
     has_predictions = False
     import traceback
