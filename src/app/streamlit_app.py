@@ -284,6 +284,34 @@ if not tickers:
             st.error(f"Error: {e}")
     st.stop()
 
+conn_check = get_connection()
+try:
+    predictions_check = pd.read_sql_query("""
+        SELECT DISTINCT s.ticker, p.model_name 
+        FROM predictions p
+        JOIN symbols s ON p.symbol_id = s.id
+    """, conn_check)
+    has_predictions = not predictions_check.empty
+except:
+    has_predictions = False
+finally:
+    conn_check.close()
+
+if not has_predictions and tickers:
+    st.warning("⚠️ **No predictions found in database.** To see results, you need to:")
+    st.markdown("""
+    1. Train models: `python src/models/train_baseline_models.py` and `python src/models/train_lstm.py`
+    2. Generate predictions: `python src/models/generate_predictions.py`
+    
+    Or run this in your terminal:
+    ```bash
+    python create_sample_data.py
+    python src/models/train_baseline_models.py
+    python src/models/train_lstm.py
+    python src/models/generate_predictions.py
+    ```
+    """)
+
 col1, col2, col3 = st.columns([2, 2, 1])
 
 with col1:
@@ -374,9 +402,36 @@ if run_button and len(date_range) == 2:
                 st.pyplot(fig2)
         else:
             st.warning("no results found for this ticker and date range")
+            st.info("""
+            **Possible reasons:**
+            - Predictions don't exist for this ticker (run `python src/models/generate_predictions.py`)
+            - Date range doesn't match available predictions
+            - Model 'lstm_model' not found in predictions table
+            
+            Check available predictions:
+            """)
+            conn_check2 = get_connection()
+            try:
+                available = pd.read_sql_query("""
+                    SELECT DISTINCT s.ticker, p.model_name, 
+                           MIN(p.date) as min_date, MAX(p.date) as max_date
+                    FROM predictions p
+                    JOIN symbols s ON p.symbol_id = s.id
+                    GROUP BY s.ticker, p.model_name
+                """, conn_check2)
+                if not available.empty:
+                    st.dataframe(available, use_container_width=True)
+                else:
+                    st.write("No predictions found in database.")
+            except Exception as e2:
+                st.write(f"Error checking predictions: {e2}")
+            finally:
+                conn_check2.close()
     
     except Exception as e:
         st.error(f"error: {str(e)}")
+        import traceback
+        st.code(traceback.format_exc())
         st.info("ensure models are trained and predictions are generated")
 
 conn.close()
