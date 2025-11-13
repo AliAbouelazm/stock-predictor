@@ -1,0 +1,32 @@
+"""Configuration constants for stock market prediction system."""
+
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).parent.parent
+
+DATA_DIR = PROJECT_ROOT / "data"
+RAW_DATA_DIR = DATA_DIR / "raw"
+INTERIM_DATA_DIR = DATA_DIR / "interim"
+PROCESSED_DATA_DIR = DATA_DIR / "processed"
+DB_PATH = DATA_DIR / "market.db"
+
+MODELS_DIR = PROJECT_ROOT / "models"
+REPORTS_DIR = PROJECT_ROOT / "reports"
+
+RANDOM_SEED = 42
+
+DEFAULT_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
+
+TRAIN_START_DATE = "2020-01-01"
+TRAIN_END_DATE = "2023-12-31"
+TEST_START_DATE = "2024-01-01"
+TEST_END_DATE = "2024-12-31"
+
+DIRECTION_THRESHOLD_UP = 0.01
+DIRECTION_THRESHOLD_DOWN = -0.01
+
+LSTM_LOOKBACK_WINDOW = 30
+LSTM_BATCH_SIZE = 32
+LSTM_EPOCHS = 50
+LSTM_HIDDEN_UNITS = 64
+
