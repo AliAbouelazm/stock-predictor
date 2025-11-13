@@ -285,6 +285,7 @@ if not tickers:
     st.stop()
 
 conn_check = get_connection()
+has_predictions = False
 try:
     predictions_check = pd.read_sql_query("""
         SELECT DISTINCT s.ticker, p.model_name 
@@ -292,9 +293,15 @@ try:
         JOIN symbols s ON p.symbol_id = s.id
     """, conn_check)
     has_predictions = not predictions_check.empty
-except:
+    if has_predictions:
+        st.success(f"✅ Found predictions for: {', '.join(sorted(predictions_check['ticker'].unique()))}")
+except Exception as e:
     has_predictions = False
-finally:
+    import traceback
+    st.error(f"Error checking predictions: {e}")
+    st.code(traceback.format_exc())
+
+if conn_check:
     conn_check.close()
 
 if not has_predictions and tickers:
